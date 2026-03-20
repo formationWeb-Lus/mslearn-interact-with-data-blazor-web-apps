@@ -1,0 +1,31 @@
+
+@using BlazingPizza
+@inject OrderState OrderState
+
+<div class="configure-dialog">
+    <h2>Configure your pizza</h2>
+
+    <p>@Pizza.Special.Name</p>
+
+    <label>Size: @Pizza.Size"</label>
+    <input type="range" 
+           min="@Pizza.MinimumSize" 
+           max="@Pizza.MaximumSize" 
+           step="1" 
+           @bind="Pizza.Size" 
+           @bind:event="oninput" />
+
+    <p>Price: <span class="price">@(Pizza.GetFormattedTotalPrice())</span></p>
+
+    <div class="dialog-buttons">
+        <button class="btn btn-secondary mr-auto" @onclick="OnCancel">Cancel</button>
+        <span class="mr-center">Price: <span class="price">@(Pizza.GetFormattedTotalPrice())</span></span>
+        <button class="btn btn-success ml-auto" @onclick="OnConfirm">Order ></button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public Pizza Pizza { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [Parameter] public EventCallback OnConfirm { get; set; }
+}

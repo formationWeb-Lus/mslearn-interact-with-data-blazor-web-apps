@@ -1,0 +1,60 @@
+@page "/myorders"
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+
+<div class="top-bar">
+    <a class="logo" href="">
+        <img src="img/logo.svg" />
+    </a>
+
+    <NavLink href="" class="nav-tab" Match="NavLinkMatch.All">
+        <img src="img/pizza-slice.svg" />
+        <div>Get Pizza</div>
+    </NavLink>
+
+    <NavLink href="myorders" class="nav-tab">
+        <img src="img/bike.svg" />
+        <div>My Orders</div>
+    </NavLink>
+</div>
+
+<div class="main">
+    @if (ordersWithStatus == null)
+    {
+        <p>Loading...</p>
+    }
+    else if (!ordersWithStatus.Any())
+    {
+        <h2>No orders placed</h2>
+        <a class="btn btn-success" href="">Order some pizza</a>
+    }
+    else
+    {
+        <div class="list-group orders-list">
+            @foreach (var item in ordersWithStatus)
+            {
+                <div class="list-group-item">
+                    <div class="col">
+                        <h5>@item.Order.CreatedTime.ToLongDateString()</h5>
+                        Items: <strong>@item.Order.Pizzas.Count()</strong><br />
+                        Total price: <strong>@item.Order.GetFormattedTotalPrice()</strong>
+                    </div>
+
+                    <div class="col">
+                        Status: <strong>@item.StatusText</strong>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    List<OrderWithStatus> ordersWithStatus;
+
+    protected override async Task OnInitializedAsync()
+    {
+        ordersWithStatus = await HttpClient.GetFromJsonAsync<List<OrderWithStatus>>(
+            $"{NavigationManager.BaseUri}orders");
+    }
+}

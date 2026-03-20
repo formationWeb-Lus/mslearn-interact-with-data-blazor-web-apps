@@ -1,0 +1,98 @@
+@page "/checkout"
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+@inject OrderState OrderState
+
+<div class="top-bar">
+    <a class="logo" href="">
+        <img src="img/logo.svg" />
+    </a>
+
+    <NavLink href="" class="nav-tab" Match="NavLinkMatch.All">
+        <img src="img/pizza-slice.svg" />
+        <div>Get Pizza</div>
+    </NavLink>
+
+    <NavLink href="myorders" class="nav-tab">
+        <img src="img/bike.svg" />
+        <div>My Orders</div>
+    </NavLink>
+</div>
+
+<div class="main">
+    <h1>Checkout</h1>
+
+    @if (OrderState.Order == null || !OrderState.Order.Pizzas.Any())
+    {
+        <p>Your order is empty.</p>
+        <NavLink href="" class="btn btn-success">Order some pizza</NavLink>
+    }
+    else
+    {
+        <div class="order-summary">
+            <h3>Order Summary</h3>
+            <ul>
+                @foreach (var pizza in OrderState.Order.Pizzas)
+                {
+                    <li>
+                        @pizza.Special.Name
+                        @if (pizza.Toppings.Any())
+                        {
+                            <span>
+                                with @string.Join(", ", pizza.Toppings.Select(t => t.Topping.Name))
+                            </span>
+                        }
+                    </li>
+                }
+            </ul>
+
+            <p><strong>Total:</strong> $@OrderState.Order.GetFormattedTotalPrice()</p>
+
+            <button class="checkout-button btn btn-warning"
+                    @onclick="PlaceOrder"
+                    disabled="@isSubmitting">
+
+                @(isSubmitting ? "Placing order..." : "Place order")
+
+            </button>
+        </div>
+    }
+</div>
+
+@code {
+    bool isSubmitting;
+
+    async Task PlaceOrder()
+    {
+        isSubmitting = true;
+
+        try
+        {
+            // ✅ Envoie la commande à l'API
+            var response = await HttpClient.PostAsJsonAsync(
+                $"{NavigationManager.BaseUri}orders",
+                OrderState.Order);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var newOrderId = await response.Content.ReadFromJsonAsync<int>();
+
+                // ✅ Reset panier
+                OrderState.ResetOrder();
+
+                // 🔥 REDIRECTION VERS LA COMMANDE SPÉCIFIQUE
+                NavigationManager.NavigateTo($"myorders/{newOrderId}");
+            }
+            else
+            {
+                Console.WriteLine("Erreur lors de la commande");
+                isSubmitting = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error placing order: {ex.Message}");
+            isSubmitting = false;
+        }
+    }
+}
